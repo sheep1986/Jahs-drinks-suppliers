@@ -7,15 +7,15 @@ const SHEET_ID = '1hjx2n06fTwONQjBsFaUXb1Pg_UOujABUXapWVYpyIes';
 const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
 
-// Alternative: Use the published web URL if available
-const PUBLISHED_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQZKqH3QbZTmjqH1bZ6ZTGfZ1RQZKqH3QbZTmjqH1bZ6ZTGfZ1RQZKqH3QbZTmjqH1bZ6ZTGfZ1RQ/pub?output=csv`;
+// Your actual published web URL
+const PUBLISHED_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQnpM334HanmWgllh_0s3iIU4kE9WiNw0pm-9KRf5YdpR4iGxnDBPA7y7DtPMILGwmbT50c1RXjdxOx/pub?output=csv`;
 
 export const fetchDrinksData = async () => {
-  // Try different methods to fetch the data
+  // Try different methods to fetch the data (published URL first since we have it)
   const urls = [
+    PUBLISHED_URL,  // Published web URL (most reliable)
     SHEET_URL,  // Direct export URL (might be blocked by CORS)
-    `${CORS_PROXY}${SHEET_URL}`,  // With CORS proxy
-    PUBLISHED_URL  // Published web URL if sheet is published
+    `${CORS_PROXY}${SHEET_URL}`  // With CORS proxy as fallback
   ];
 
   let lastError = null;
