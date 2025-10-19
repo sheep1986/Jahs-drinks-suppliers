@@ -19,16 +19,12 @@ const Drinks = () => {
       const filtered = drinks.filter(drink => {
         const searchLower = searchTerm.toLowerCase().trim();
         
-        // Enhanced search - partial matches for any word in the search term
-        const searchWords = searchLower.split(' ').filter(word => word.length > 0);
-        
-        return searchWords.every(word => {
-          return (
-            (drink.drinkName && drink.drinkName.toLowerCase().includes(word)) ||
-            (drink.category && drink.category.toLowerCase().includes(word)) ||
-            (drink.supplier && drink.supplier.toLowerCase().includes(word)) ||
-            (drink.brand && drink.brand.toLowerCase().includes(word))
-          );
+        // Search across all fields
+        return Object.values(drink).some(value => {
+          if (value && typeof value === 'string') {
+            return value.toLowerCase().includes(searchLower);
+          }
+          return false;
         });
       });
       setFilteredDrinks(filtered);
@@ -39,37 +35,16 @@ const Drinks = () => {
     try {
       setLoading(true);
       const data = await fetchDrinksData();
-      // Process data to ensure ml units
-      const processedData = data.map(drink => ({
-        ...drink,
-        unit: convertToMl(drink.unit)
-      }));
-      setDrinks(processedData);
-      setFilteredDrinks(processedData);
+      console.log('Loaded drinks data:', data);
+      setDrinks(data);
+      setFilteredDrinks(data);
       setError(null);
     } catch (err) {
-      setError('Failed to load drinks data. Please try again later.');
+      setError('Failed to load drinks data. Please check if the spreadsheet is publicly accessible.');
       console.error('Error loading drinks:', err);
     } finally {
       setLoading(false);
     }
-  };
-
-  const convertToMl = (unit) => {
-    if (!unit) return 'N/A';
-    
-    // Convert cl to ml if present
-    if (unit.toLowerCase().includes('cl')) {
-      const match = unit.match(/(\d+(?:\.\d+)?)\s*cl/i);
-      if (match) {
-        const clValue = parseFloat(match[1]);
-        const mlValue = clValue * 10;
-        return unit.replace(/\d+(?:\.\d+)?\s*cl/i, `${mlValue}ml`);
-      }
-    }
-    
-    // Ensure ml is lowercase
-    return unit.replace(/ML/g, 'ml').replace(/Ml/g, 'ml');
   };
 
   const handleDrinkSelect = (drink) => {
@@ -102,6 +77,31 @@ const Drinks = () => {
 
   const formatValue = (value) => {
     return value && value !== '' ? value : 'Not available';
+  };
+
+  // Function to get the first non-empty value from multiple possible field names
+  const getFieldValue = (drink, fieldNames) => {
+    for (const fieldName of fieldNames) {
+      if (drink[fieldName] && drink[fieldName].trim() !== '') {
+        return drink[fieldName];
+      }
+    }
+    return '';
+  };
+
+  // Get drink name from various possible columns
+  const getDrinkName = (drink) => {
+    return getFieldValue(drink, ['Drink Name', 'Product Name', 'Product', 'Item Name', 'Item', 'Name', 'Description']);
+  };
+
+  // Get category from various possible columns  
+  const getCategory = (drink) => {
+    return getFieldValue(drink, ['Category', 'Type', 'Product Type', 'Product Category']);
+  };
+
+  // Get supplier from various possible columns
+  const getSupplier = (drink) => {
+    return getFieldValue(drink, ['Supplier', 'Vendor', 'Distributor', 'Company']);
   };
 
   if (loading) {
@@ -157,13 +157,13 @@ const Drinks = () => {
                 className={`drink-item ${selectedDrink === drink ? 'selected' : ''}`}
               >
                 <div onClick={() => handleDrinkSelect(drink)} className="drink-item-content">
-                  <div className="drink-name">{formatValue(drink.drinkName)}</div>
+                  <div className="drink-name">{formatValue(getDrinkName(drink))}</div>
                   <div className="drink-meta">
-                    <span className="category">{formatValue(drink.category)}</span>
-                    <span className="supplier">{formatValue(drink.supplier)}</span>
+                    <span className="category">{formatValue(getCategory(drink))}</span>
+                    <span className="supplier">{formatValue(getSupplier(drink))}</span>
                   </div>
                   <div className="drink-unit">
-                    Unit: {formatValue(drink.unit)}
+                    Unit: {formatValue(getFieldValue(drink, ['Unit', 'Size', 'Volume', 'Package Size']))}
                   </div>
                 </div>
                 <button 
@@ -184,31 +184,31 @@ const Drinks = () => {
 
         {selectedDrink && !showSupplierModal && (
           <div className="drink-details">
-            <h2>{formatValue(selectedDrink.drinkName)}</h2>
+            <h2>{formatValue(getDrinkName(selectedDrink))}</h2>
             
             <div className="detail-section">
               <h3>Product Information</h3>
               <div className="detail-row">
                 <span className="label">Category:</span>
-                <span className="value">{formatValue(selectedDrink.category)}</span>
+                <span className="value">{formatValue(getCategory(selectedDrink))}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Brand:</span>
-                <span className="value">{formatValue(selectedDrink.brand)}</span>
+                <span className="value">{formatValue(getFieldValue(selectedDrink, ['Brand', 'Brand Name', 'Manufacturer']))}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Unit:</span>
-                <span className="value">{formatValue(selectedDrink.unit)}</span>
+                <span className="value">{formatValue(getFieldValue(selectedDrink, ['Unit', 'Size', 'Volume', 'Package Size']))}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Price (JMD):</span>
                 <span className="value price">
-                  ${formatValue(selectedDrink.price)}
+                  ${formatValue(getFieldValue(selectedDrink, ['Price (JMD)', 'Price', 'Unit Price', 'Cost']))}
                 </span>
               </div>
               <div className="detail-row">
                 <span className="label">Min Order Qty:</span>
-                <span className="value">{formatValue(selectedDrink.minOrder)}</span>
+                <span className="value">{formatValue(getFieldValue(selectedDrink, ['Min Order Qty', 'Minimum Order', 'MOQ']))}</span>
               </div>
             </div>
 
@@ -230,26 +230,29 @@ const Drinks = () => {
               ✕
             </button>
             <h2>Supplier Details</h2>
-            <h3>{formatValue(selectedDrink.drinkName)}</h3>
+            <h3>{formatValue(getDrinkName(selectedDrink))}</h3>
             
             <div className="detail-section">
               <div className="detail-row">
                 <span className="label">Supplier:</span>
-                <span className="value">{formatValue(selectedDrink.supplier)}</span>
+                <span className="value">{formatValue(getSupplier(selectedDrink))}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Contact Person:</span>
-                <span className="value">{formatValue(selectedDrink.contactPerson)}</span>
+                <span className="value">{formatValue(getFieldValue(selectedDrink, ['Contact Person', 'Contact', 'Representative']))}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Email:</span>
                 <span className="value">
-                  {selectedDrink.email ? (
+                  {selectedDrink['Email'] || selectedDrink['Contact Email'] ? (
                     <button 
                       className="contact-link"
-                      onClick={() => handleEmailClick(selectedDrink.email, selectedDrink.supplier)}
+                      onClick={() => handleEmailClick(
+                        selectedDrink['Email'] || selectedDrink['Contact Email'],
+                        getSupplier(selectedDrink)
+                      )}
                     >
-                      {selectedDrink.email}
+                      {selectedDrink['Email'] || selectedDrink['Contact Email']}
                     </button>
                   ) : 'Not available'}
                 </span>
@@ -257,27 +260,30 @@ const Drinks = () => {
               <div className="detail-row">
                 <span className="label">Phone:</span>
                 <span className="value">
-                  {selectedDrink.phone ? (
+                  {selectedDrink['Phone'] || selectedDrink['Contact Phone'] || selectedDrink['Tel'] ? (
                     <button 
                       className="contact-link"
-                      onClick={() => handlePhoneClick(selectedDrink.phone, selectedDrink.supplier)}
+                      onClick={() => handlePhoneClick(
+                        selectedDrink['Phone'] || selectedDrink['Contact Phone'] || selectedDrink['Tel'],
+                        getSupplier(selectedDrink)
+                      )}
                     >
-                      {selectedDrink.phone}
+                      {selectedDrink['Phone'] || selectedDrink['Contact Phone'] || selectedDrink['Tel']}
                     </button>
                   ) : 'Not available'}
                 </span>
               </div>
               <div className="detail-row">
                 <span className="label">Address:</span>
-                <span className="value">{formatValue(selectedDrink.address)}</span>
+                <span className="value">{formatValue(getFieldValue(selectedDrink, ['Address', 'Location', 'Supplier Address']))}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Delivery Days:</span>
-                <span className="value">{formatValue(selectedDrink.deliveryDays)}</span>
+                <span className="value">{formatValue(getFieldValue(selectedDrink, ['Delivery Days', 'Delivery', 'Lead Time']))}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Payment Terms:</span>
-                <span className="value">{formatValue(selectedDrink.paymentTerms)}</span>
+                <span className="value">{formatValue(getFieldValue(selectedDrink, ['Payment Terms', 'Terms', 'Payment']))}</span>
               </div>
             </div>
 
