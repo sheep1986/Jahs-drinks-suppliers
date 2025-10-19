@@ -1,80 +1,75 @@
 import Papa from 'papaparse';
 
-// Your published URL base
+// Your spreadsheet ID
+const SHEET_ID = '1hjx2n06fTwONQjBsFaUXb1Pg_UOujABUXapWVYpyIes';
+
+// Your published URL
 const PUBLISHED_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQnpM334HanmWgllh_0s3iIU4kE9WiNw0pm-9KRf5YdpR4iGxnDBPA7y7DtPMILGwmbT50c1RXjdxOx/pub';
 
 export const fetchDrinksData = async () => {
   try {
-    console.log('Fetching drinks data from Google Sheets...');
+    console.log('Fetching drinks data...');
     
-    // To publish ALL sheets, we need to fetch each one separately
-    // When you publish a Google Sheet, each tab needs its own GID parameter
+    // IMPORTANT: For Google Sheets to publish ALL tabs, you need to:
+    // 1. Go to File > Share > Publish to web
+    // 2. In the dropdown, change from "Entire Document" to "Sheet2" (or whatever your second sheet is named)
+    // 3. Click Publish
+    // 4. Get that URL and use it here
     
-    // Step 1: Try the main URL first (usually gets first sheet)
+    // For now, let's try to fetch both sheets directly
     const allData = [];
     
+    // Fetch Sheet 1 (default, no GID needed)
     try {
-      const response = await fetch(`${PUBLISHED_BASE}?output=csv`);
-      if (response.ok) {
-        const text = await response.text();
-        if (!text.includes('<!DOCTYPE')) {
-          const result = await new Promise((resolve) => {
-            Papa.parse(text, {
+      console.log('Fetching Sheet 1...');
+      const response1 = await fetch(`${PUBLISHED_BASE}?output=csv`);
+      
+      if (response1.ok) {
+        const text1 = await response1.text();
+        if (!text1.includes('<!DOCTYPE')) {
+          const result1 = await new Promise((resolve) => {
+            Papa.parse(text1, {
               header: true,
               skipEmptyLines: true,
               complete: (results) => {
                 const filtered = results.data.filter(row => 
                   Object.values(row).some(value => value && value.toString().trim() !== '')
                 );
-                console.log(`Sheet 1: ${filtered.length} items found`);
-                console.log('Sheet 1 headers:', results.meta.fields);
+                console.log(`Sheet 1: Found ${filtered.length} items`);
+                if (filtered.length > 0) {
+                  console.log('Sheet 1 sample:', filtered[0]);
+                }
                 resolve(filtered);
               },
               error: () => resolve([])
             });
           });
-          allData.push(...result);
+          allData.push(...result1);
         }
       }
     } catch (e) {
-      console.log('Could not fetch first sheet');
+      console.error('Error fetching Sheet 1:', e);
     }
     
-    // Step 2: Try to fetch additional sheets with different GID parameters
-    // You need to find your sheet's GID by:
-    // 1. Open your Google Sheet
-    // 2. Click on the second tab (where Coke is)
-    // 3. Look at the URL - it will show #gid=XXXXXXX
-    // 4. That number is what we need here
-    
-    // Common GID patterns to try for second sheets
-    const secondSheetGids = [
-      '1', // Sometimes it's just 1
-      '2', 
-      '1050511479', // Common pattern
-      '269289963',  // Common pattern
-      '834170036',  // Common pattern
-      '1947885914', // Common pattern
-      '1402044025', // Common pattern
-      '1960973522', // Common pattern
-      '2057072618', // Common pattern
-      '1780868280', // Common pattern
-      '1188287910', // Common pattern
-      '790329945',  // Common pattern
+    // Try alternative URLs for the second sheet
+    // You may need to publish Sheet2 separately and get its URL
+    const sheet2Urls = [
+      `${PUBLISHED_BASE}?output=csv&gid=1`, // Try GID 1
+      `${PUBLISHED_BASE}?output=csv&single=true&gid=1`,
+      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=1`,
+      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&id=${SHEET_ID}&gid=1`,
+      // Add the published URL for Sheet2 if you have it
     ];
     
-    // Try each potential second sheet GID
-    for (const gid of secondSheetGids) {
+    console.log('Attempting to fetch Sheet 2...');
+    for (const url of sheet2Urls) {
       try {
-        const url = `${PUBLISHED_BASE}?output=csv&gid=${gid}`;
-        console.log(`Trying GID ${gid}...`);
-        
         const response = await fetch(url);
         if (response.ok) {
           const text = await response.text();
           
-          // Make sure we got CSV, not HTML
-          if (!text.includes('<!DOCTYPE') && text.trim() !== '') {
+          // Check if it's CSV and not HTML
+          if (!text.includes('<!DOCTYPE') && !text.includes('<html') && text.trim() !== '') {
             const result = await new Promise((resolve) => {
               Papa.parse(text, {
                 header: true,
@@ -85,26 +80,20 @@ export const fetchDrinksData = async () => {
                   );
                   
                   if (filtered.length > 0) {
-                    // Check if this looks like different data (not duplicate of sheet 1)
-                    const firstItem = filtered[0];
-                    const firstItemName = Object.values(firstItem)[0];
+                    // Check if this is different data (has Coke products)
+                    const hasCoke = filtered.some(row => {
+                      const values = Object.values(row).join(' ').toLowerCase();
+                      return values.includes('coke') || values.includes('coca');
+                    });
                     
-                    // Check if this sheet has different data than what we already have
-                    const isDuplicate = allData.some(item => 
-                      Object.values(item)[0] === firstItemName
-                    );
-                    
-                    if (!isDuplicate) {
-                      console.log(`✓ Sheet with GID ${gid}: ${filtered.length} new items found!`);
-                      console.log('Sample item from this sheet:', firstItem);
+                    if (hasCoke) {
+                      console.log(`✓ Sheet 2: Found ${filtered.length} items (includes Coke products!)`);
+                      console.log('Sheet 2 sample:', filtered[0]);
                       resolve(filtered);
-                    } else {
-                      console.log(`Sheet GID ${gid} appears to be duplicate data`);
-                      resolve([]);
+                      return;
                     }
-                  } else {
-                    resolve([]);
                   }
+                  resolve([]);
                 },
                 error: () => resolve([])
               });
@@ -112,30 +101,37 @@ export const fetchDrinksData = async () => {
             
             if (result.length > 0) {
               allData.push(...result);
-              // If we found data, keep trying other GIDs in case there are more sheets
+              break; // Found Sheet 2, stop trying other URLs
             }
           }
         }
       } catch (error) {
-        // Silently continue to next GID
+        // Continue to next URL
       }
     }
     
-    console.log(`TOTAL: ${allData.length} items from all sheets`);
+    console.log(`TOTAL: ${allData.length} items loaded`);
     
-    // Log a message to help find the correct GID
     if (allData.length < 62) {
-      console.log('⚠️ Not all items found. To find your sheet GID:');
-      console.log('1. Open your Google Sheet');
-      console.log('2. Click on the tab with Coke products');
-      console.log('3. Look at the URL - it will show #gid=XXXXXXX');
-      console.log('4. Tell me that number so I can add it');
+      console.log('⚠️ Not all data loaded. To fix this:');
+      console.log('OPTION 1 - Find the GID:');
+      console.log('1. Open your spreadsheet');
+      console.log('2. Click on Sheet2 tab at the bottom');
+      console.log('3. Look at the URL - find the number after #gid=');
+      console.log('4. Tell me that number');
+      console.log('');
+      console.log('OPTION 2 - Publish Sheet2 separately:');
+      console.log('1. In your spreadsheet, go to File > Share > Publish to web');
+      console.log('2. In the first dropdown, select "Sheet2" instead of "Entire Document"');
+      console.log('3. Click Publish');
+      console.log('4. Copy the new URL it gives you');
+      console.log('5. Tell me that URL');
     }
     
     return allData;
     
   } catch (error) {
-    console.error('Error fetching data:', error);
+    console.error('Error in fetchDrinksData:', error);
     return [];
   }
 };
