@@ -24,10 +24,10 @@ const Drinks = () => {
         
         return searchWords.every(word => {
           return (
-            (drink['Drink Name'] && drink['Drink Name'].toLowerCase().includes(word)) ||
-            (drink['Category'] && drink['Category'].toLowerCase().includes(word)) ||
-            (drink['Supplier'] && drink['Supplier'].toLowerCase().includes(word)) ||
-            (drink['Brand'] && drink['Brand'].toLowerCase().includes(word))
+            (drink.drinkName && drink.drinkName.toLowerCase().includes(word)) ||
+            (drink.category && drink.category.toLowerCase().includes(word)) ||
+            (drink.supplier && drink.supplier.toLowerCase().includes(word)) ||
+            (drink.brand && drink.brand.toLowerCase().includes(word))
           );
         });
       });
@@ -42,7 +42,7 @@ const Drinks = () => {
       // Process data to ensure ml units
       const processedData = data.map(drink => ({
         ...drink,
-        'Unit': convertToMl(drink['Unit'])
+        unit: convertToMl(drink.unit)
       }));
       setDrinks(processedData);
       setFilteredDrinks(processedData);
@@ -157,13 +157,13 @@ const Drinks = () => {
                 className={`drink-item ${selectedDrink === drink ? 'selected' : ''}`}
               >
                 <div onClick={() => handleDrinkSelect(drink)} className="drink-item-content">
-                  <div className="drink-name">{formatValue(drink['Drink Name'])}</div>
+                  <div className="drink-name">{formatValue(drink.drinkName)}</div>
                   <div className="drink-meta">
-                    <span className="category">{formatValue(drink['Category'])}</span>
-                    <span className="supplier">{formatValue(drink['Supplier'])}</span>
+                    <span className="category">{formatValue(drink.category)}</span>
+                    <span className="supplier">{formatValue(drink.supplier)}</span>
                   </div>
                   <div className="drink-unit">
-                    Unit: {formatValue(drink['Unit'])}
+                    Unit: {formatValue(drink.unit)}
                   </div>
                 </div>
                 <button 
@@ -184,31 +184,31 @@ const Drinks = () => {
 
         {selectedDrink && !showSupplierModal && (
           <div className="drink-details">
-            <h2>{formatValue(selectedDrink['Drink Name'])}</h2>
+            <h2>{formatValue(selectedDrink.drinkName)}</h2>
             
             <div className="detail-section">
               <h3>Product Information</h3>
               <div className="detail-row">
                 <span className="label">Category:</span>
-                <span className="value">{formatValue(selectedDrink['Category'])}</span>
+                <span className="value">{formatValue(selectedDrink.category)}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Brand:</span>
-                <span className="value">{formatValue(selectedDrink['Brand'])}</span>
+                <span className="value">{formatValue(selectedDrink.brand)}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Unit:</span>
-                <span className="value">{formatValue(selectedDrink['Unit'])}</span>
+                <span className="value">{formatValue(selectedDrink.unit)}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Price (JMD):</span>
                 <span className="value price">
-                  ${formatValue(selectedDrink['Price (JMD)'])}
+                  ${formatValue(selectedDrink.price)}
                 </span>
               </div>
               <div className="detail-row">
                 <span className="label">Min Order Qty:</span>
-                <span className="value">{formatValue(selectedDrink['Min Order Qty'])}</span>
+                <span className="value">{formatValue(selectedDrink.minOrder)}</span>
               </div>
             </div>
 
@@ -230,26 +230,26 @@ const Drinks = () => {
               ✕
             </button>
             <h2>Supplier Details</h2>
-            <h3>{formatValue(selectedDrink['Drink Name'])}</h3>
+            <h3>{formatValue(selectedDrink.drinkName)}</h3>
             
             <div className="detail-section">
               <div className="detail-row">
                 <span className="label">Supplier:</span>
-                <span className="value">{formatValue(selectedDrink['Supplier'])}</span>
+                <span className="value">{formatValue(selectedDrink.supplier)}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Contact Person:</span>
-                <span className="value">{formatValue(selectedDrink['Contact Person'])}</span>
+                <span className="value">{formatValue(selectedDrink.contactPerson)}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Email:</span>
                 <span className="value">
-                  {selectedDrink['Email'] ? (
+                  {selectedDrink.email ? (
                     <button 
                       className="contact-link"
-                      onClick={() => handleEmailClick(selectedDrink['Email'], selectedDrink['Supplier'])}
+                      onClick={() => handleEmailClick(selectedDrink.email, selectedDrink.supplier)}
                     >
-                      {selectedDrink['Email']}
+                      {selectedDrink.email}
                     </button>
                   ) : 'Not available'}
                 </span>
@@ -257,27 +257,27 @@ const Drinks = () => {
               <div className="detail-row">
                 <span className="label">Phone:</span>
                 <span className="value">
-                  {selectedDrink['Phone'] ? (
+                  {selectedDrink.phone ? (
                     <button 
                       className="contact-link"
-                      onClick={() => handlePhoneClick(selectedDrink['Phone'], selectedDrink['Supplier'])}
+                      onClick={() => handlePhoneClick(selectedDrink.phone, selectedDrink.supplier)}
                     >
-                      {selectedDrink['Phone']}
+                      {selectedDrink.phone}
                     </button>
                   ) : 'Not available'}
                 </span>
               </div>
               <div className="detail-row">
                 <span className="label">Address:</span>
-                <span className="value">{formatValue(selectedDrink['Address'])}</span>
+                <span className="value">{formatValue(selectedDrink.address)}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Delivery Days:</span>
-                <span className="value">{formatValue(selectedDrink['Delivery Days'])}</span>
+                <span className="value">{formatValue(selectedDrink.deliveryDays)}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Payment Terms:</span>
-                <span className="value">{formatValue(selectedDrink['Payment Terms'])}</span>
+                <span className="value">{formatValue(selectedDrink.paymentTerms)}</span>
               </div>
             </div>
 

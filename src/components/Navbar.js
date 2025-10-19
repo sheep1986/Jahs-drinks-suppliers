@@ -29,6 +29,11 @@ const Navbar = () => {
             Contact
           </NavLink>
         </li>
+        <li>
+          <NavLink to="/settings" className={({ isActive }) => isActive ? 'active' : ''}>
+            Settings
+          </NavLink>
+        </li>
       </ul>
     </nav>
   );
