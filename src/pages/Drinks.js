@@ -36,11 +36,16 @@ const Drinks = () => {
       setLoading(true);
       const data = await fetchDrinksData();
       console.log('Loaded drinks data:', data);
-      setDrinks(data);
-      setFilteredDrinks(data);
-      setError(null);
+      
+      if (!data || data.length === 0) {
+        setError('No data found. Please check that the spreadsheet is published and accessible.');
+      } else {
+        setDrinks(data);
+        setFilteredDrinks(data);
+        setError(null);
+      }
     } catch (err) {
-      setError('Unable to load drinks data.');
+      setError('Unable to load drinks data. Please check your internet connection.');
       console.error('Error loading drinks:', err);
     } finally {
       setLoading(false);
