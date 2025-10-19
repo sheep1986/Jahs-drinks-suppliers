@@ -40,7 +40,7 @@ const Drinks = () => {
       setFilteredDrinks(data);
       setError(null);
     } catch (err) {
-      setError('Failed to load drinks data. Please check if the spreadsheet is publicly accessible.');
+      setError('Unable to load drinks data. The Google Sheet needs to be published: File → Share → Publish to web → Select CSV format → Publish');
       console.error('Error loading drinks:', err);
     } finally {
       setLoading(false);

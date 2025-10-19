@@ -7,7 +7,7 @@ const Navbar = () => {
       <div className="navbar-brand">
         <NavLink to="/">
           <img 
-            src="https://i.ibb.co/XkYJgkQ/jahs-logo.png" 
+            src="/jahs-logo.png" 
             alt="Jah's Jamaican Cuisine" 
             className="navbar-logo"
           />
