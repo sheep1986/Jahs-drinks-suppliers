@@ -82,8 +82,14 @@ const Drinks = () => {
   // Function to get the first non-empty value from multiple possible field names
   const getFieldValue = (drink, fieldNames) => {
     for (const fieldName of fieldNames) {
+      // Check exact match
       if (drink[fieldName] && drink[fieldName].trim() !== '') {
         return drink[fieldName];
+      }
+      // Check case-insensitive match
+      const key = Object.keys(drink).find(k => k.toLowerCase() === fieldName.toLowerCase());
+      if (key && drink[key] && drink[key].trim() !== '') {
+        return drink[key];
       }
     }
     return '';
@@ -91,17 +97,20 @@ const Drinks = () => {
 
   // Get drink name from various possible columns
   const getDrinkName = (drink) => {
-    return getFieldValue(drink, ['Drink Name', 'Product Name', 'Product', 'Item Name', 'Item', 'Name', 'Description']);
+    return getFieldValue(drink, ['Drink Name', 'DRINK NAME', 'Product Name', 'Product', 'Item Name', 'Item', 'Name', 'Description', 'DrinkName']) || 
+           drink['DRINK NAME'] || drink['Drink Name'] || Object.values(drink)[0] || '';
   };
 
   // Get category from various possible columns  
   const getCategory = (drink) => {
-    return getFieldValue(drink, ['Category', 'Type', 'Product Type', 'Product Category']);
+    return getFieldValue(drink, ['Category', 'CATEGORY', 'Type', 'Product Type', 'Product Category']) ||
+           drink['CATEGORY'] || drink['Category'] || '';
   };
 
   // Get supplier from various possible columns
   const getSupplier = (drink) => {
-    return getFieldValue(drink, ['Supplier', 'Vendor', 'Distributor', 'Company']);
+    return getFieldValue(drink, ['Supplier', 'SUPPLIER', 'Vendor', 'Distributor', 'Company']) ||
+           drink['SUPPLIER'] || drink['Supplier'] || '';
   };
 
   if (loading) {
